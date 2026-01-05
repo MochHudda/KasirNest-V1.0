@@ -1,0 +1,99 @@
+Buatkan aplikasi kasir berbasis desktop menggunakan bahasa Go dengan framework Fyne untuk UI/UX, dan Firebase (Auth, Firestore, Storage) sebagai backend database. Aplikasi harus aman dari inspeksi (compiled binary, tanpa hardcode API key). Berikut detail kebutuhan:
+
+1. **Stack Teknologi**
+   - Go (Golang) sebagai bahasa utama
+   - Fyne sebagai framework UI desktop
+   - Firebase Auth untuk login user (email/password)
+   - Firebase Firestore untuk menyimpan data produk dan transaksi
+   - Firebase Storage untuk upload gambar produk (opsional)
+   - File konfigurasi `.ini` untuk menyimpan API key dan project ID
+
+2. **Struktur Proyek**
+KasirNest/
+├── go.mod
+├── main.go
+│
+├── config/                  # Konfigurasi aplikasi
+│   └── app.ini             # Menyimpan API key, project ID, dll
+│
+├── ui/                     # Komponen UI modular
+│   ├── login.go            # Form login
+│   ├── dashboard.go        # Tampilan utama
+│   ├── products.go         # CRUD produk
+│   ├── transactions.go     # CRUD transaksi
+│   └── report.go           # Laporan penjualan
+│
+├── firebase/               # Modul koneksi ke Firebase
+│   ├── auth.go             # Login dan token
+│   ├── firestore.go        # CRUD Firestore
+│   └── storage.go          # Upload/download gambar
+│
+├── models/                 # Struktur data
+│   ├── user.go             # Data user
+│   ├── product.go          # Data produk
+│   └── transaction.go      # Data transaksi
+│
+├── utils/                  # Fungsi bantu
+│   ├── validator.go        # Validasi input
+│   ├── formatter.go        # Format tanggal, angka
+│   └── crypto.go           # Enkripsi/dekripsi konfigurasi
+│
+├── assets/                 # Gambar, ikon, font
+│   └── logo.png
+│
+├── internal/               # Logika internal yang tidak diekspos
+│   └── secure.go           # Anti-inspection, obfuscation hooks
+│
+└── build/                  # Script build dan distribusi
+    ├── build.sh            # Compile + obfuscate
+    └── installer/          # File installer (fyne package)
+
+3. **Fitur Utama**
+- Login user dengan Firebase Auth
+- Dashboard utama setelah login
+- CRUD Produk (nama, harga, stok, kategori, gambar)
+- CRUD Transaksi (user, tanggal, total, daftar item)
+- Laporan transaksi sederhana (filter per tanggal)
+- Validasi input (stok tidak boleh minus, harga harus angka)
+- UI modular dengan Fyne (form, tabel, tombol, dialog)
+
+4. **Keamanan**
+- Jangan hardcode API key, ambil dari file `.ini`
+- Compile dengan `go build -ldflags="-s -w"`
+- Gunakan `garble build` untuk obfuscation
+- Firebase Rules: hanya user login yang bisa akses data
+
+5. **Distribusi**
+- Bisa di-build untuk Windows, macOS, Linux
+- Gunakan `fyne package` untuk membuat installer
+
+6. **Database**
+- Gunakan Firebase Firestore untuk menyimpan data produk dan transaksi
+- Gunakan Firebase Storage untuk upload gambar produk (opsional)
+- Struktur data:
+    1. Koleksi: `users`
+    - Menyimpan data pengguna yang login melalui Firebase Auth
+    - Field: `user_id`,`email`, `name`, `role` (admin/kasir), `created_at`, `last_login`
+
+    2. Koleksi: `products`
+    - Menyimpan daftar produk yang dijual
+    - Field: `product_id`,`name`, `price`, `stock`, `category`, `barcode`, `image_url`, `created_at`, `updated_at`
+
+    3. Koleksi: `transactions`
+    - Menyimpan transaksi penjualan
+    - Field: `trans_id`,`user_id`, `date`, `total`, `payment_method`, `items` (array of product items)
+    - Setiap item dalam `items` berisi: `product_id`, `name`, `qty`, `price`, `subtotal`
+
+    4. Koleksi: `categories`
+    - Menyimpan kategori produk
+    - Field: `category_id`,`name`, `description`
+
+    5. Koleksi: `reports`
+    - Menyimpan ringkasan laporan harian/mingguan
+    - Field: `report_id`,`date`, `total_sales`, `total_transactions`, `top_products` (array)
+
+Output yang diharapkan:
+- Kode Go modular sesuai struktur di atas
+- Contoh implementasi login, CRUD produk, CRUD transaksi
+- Contoh file `.ini` untuk konfigurasi
+- Penjelasan singkat cara compile dan distribusi
