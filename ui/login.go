@@ -2,11 +2,13 @@ package ui
 
 import (
 	"fmt"
+	"image/color"
 	"log"
 	"strconv"
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
@@ -40,27 +42,52 @@ func NewLoginScreen(w fyne.Window, authService *firebase.AuthService, onLoginSuc
 	return login
 }
 
-// setupUI sets up the login interface
+// setupUI sets up the login interface with modern dark design
 func (l *LoginScreen) setupUI() {
-	// Create logo
-	logoResource, err := fyne.LoadResourceFromPath("assets/logo.png")
-	var logo *widget.Icon
-	if err == nil {
-		logo = widget.NewIcon(logoResource)
-	} else {
-		// Fallback to default icon if logo not found
-		logo = widget.NewIcon(theme.LoginIcon())
-	}
+	// Create dark background
+	darkBg := canvas.NewRectangle(color.NRGBA{R: 28, G: 42, B: 56, A: 255}) // Dark navy
 
-	// Create title
-	title := widget.NewLabel("KasirNest")
-	title.Alignment = fyne.TextAlignCenter
-	title.TextStyle = fyne.TextStyle{Bold: true}
+	// Create KasirNest logo (stylized K with shopping cart)
+	logoText := canvas.NewText("K", color.NRGBA{R: 56, G: 189, B: 190, A: 255}) // Teal color
+	logoText.TextSize = 80
+	logoText.TextStyle = fyne.TextStyle{Bold: true}
+	logoText.Alignment = fyne.TextAlignCenter
 
-	subtitle := widget.NewLabel("Sistem Kasir Modern")
-	subtitle.Alignment = fyne.TextAlignCenter
+	// Cart wheels (orange circles)
+	wheel1 := canvas.NewCircle(color.NRGBA{R: 255, G: 138, B: 48, A: 255}) // Orange
+	wheel1.Resize(fyne.NewSize(12, 12))
+	wheel2 := canvas.NewCircle(color.NRGBA{R: 255, G: 138, B: 48, A: 255}) // Orange
+	wheel2.Resize(fyne.NewSize(12, 12))
 
-	// Create form fields
+	// Position wheels relative to the K
+	logoContainer := container.NewWithoutLayout(
+		logoText,
+		wheel1,
+		wheel2,
+	)
+	logoContainer.Resize(fyne.NewSize(120, 100))
+	wheel1.Move(fyne.NewPos(70, 85))
+	wheel2.Move(fyne.NewPos(95, 85))
+
+	// KasirNest title
+	kasirText := canvas.NewText("KasirNest", color.NRGBA{R: 56, G: 189, B: 190, A: 255}) // Teal
+	kasirText.TextSize = 36
+	kasirText.TextStyle = fyne.TextStyle{Bold: true}
+	kasirText.Alignment = fyne.TextAlignCenter
+
+	// V1.0 version text
+	versionText := canvas.NewText("V1.0", color.NRGBA{R: 255, G: 138, B: 48, A: 255}) // Orange
+	versionText.TextSize = 20
+	versionText.TextStyle = fyne.TextStyle{Bold: true}
+	versionText.Alignment = fyne.TextAlignCenter
+
+	// Login title
+	loginTitle := canvas.NewText("Login", color.NRGBA{R: 255, G: 255, B: 255, A: 255}) // White
+	loginTitle.TextSize = 28
+	loginTitle.TextStyle = fyne.TextStyle{Bold: true}
+	loginTitle.Alignment = fyne.TextAlignCenter
+
+	// Create custom styled entries
 	l.emailEntry = widget.NewEntry()
 	l.emailEntry.SetPlaceHolder("Email")
 	l.emailEntry.Validator = func(text string) error {
@@ -79,9 +106,29 @@ func (l *LoginScreen) setupUI() {
 		return nil
 	}
 
-	// Create login button
-	l.loginButton = widget.NewButton("Masuk", l.handleLogin)
+	// Email field with envelope icon
+	emailIcon := canvas.NewImageFromResource(theme.MailSendIcon())
+	emailIcon.Resize(fyne.NewSize(20, 20))
+	emailContainer := container.NewBorder(nil, nil,
+		container.NewPadded(emailIcon), nil,
+		l.emailEntry,
+	)
+
+	// Password field with lock icon
+	passwordIcon := canvas.NewImageFromResource(theme.ViewRefreshIcon()) // Using available icon as substitute
+	passwordIcon.Resize(fyne.NewSize(20, 20))
+	passwordContainer := container.NewBorder(nil, nil,
+		container.NewPadded(passwordIcon), nil,
+		l.passwordEntry,
+	)
+
+	// Create modern login button
+	l.loginButton = widget.NewButton("Log in", l.handleLogin)
 	l.loginButton.Importance = widget.HighImportance
+
+	// Create sign up link
+	signUpLabel := widget.NewRichTextFromMarkdown("Don't have an account? **[Sign up](signup)**")
+	signUpLabel.Wrapping = fyne.TextWrapOff
 
 	// Create loading label
 	l.loadingLabel = widget.NewLabel("")
@@ -95,24 +142,53 @@ func (l *LoginScreen) setupUI() {
 		l.handleLogin()
 	}
 
-	// Create form
-	form := container.NewVBox(
-		widget.NewCard("", "", container.NewVBox(
-			container.NewCenter(logo),
-			container.NewCenter(title),
-			container.NewCenter(subtitle),
-			widget.NewSeparator(),
-			widget.NewLabel("Email:"),
-			l.emailEntry,
-			widget.NewLabel("Password:"),
-			l.passwordEntry,
-			container.NewPadded(l.loginButton),
-			l.loadingLabel,
-		)),
+	// Create main login form with proper spacing
+	formContent := container.NewVBox(
+		// Logo and branding section
+		container.NewCenter(logoContainer),
+		container.NewVBox(
+			container.NewCenter(kasirText),
+			container.NewCenter(versionText),
+		),
+		widget.NewSeparator(),
+
+		// Login title
+		container.NewCenter(loginTitle),
+
+		// Spacing
+		canvas.NewRectangle(color.Transparent),
+
+		// Input fields
+		emailContainer,
+		passwordContainer,
+
+		// Spacing
+		canvas.NewRectangle(color.Transparent),
+
+		// Login button
+		l.loginButton,
+
+		// Loading indicator
+		l.loadingLabel,
+
+		// Sign up link
+		container.NewCenter(signUpLabel),
 	)
 
-	// Center the form
-	l.container = container.NewCenter(form)
+	// Add padding around the form
+	paddedForm := container.NewPadded(formContent)
+
+	// Create the main container with dark background
+	l.container = container.NewMax(
+		darkBg,
+		container.NewCenter(
+			container.NewVBox(
+				canvas.NewRectangle(color.Transparent), // Top spacing
+				paddedForm,
+				canvas.NewRectangle(color.Transparent), // Bottom spacing
+			),
+		),
+	)
 }
 
 // handleLogin handles the login process
