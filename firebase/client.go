@@ -2,6 +2,7 @@ package firebase
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -97,31 +98,26 @@ func (c *Client) Close() error {
 
 // createCredentialsJSON creates credentials JSON from config
 func createCredentialsJSON(config *FirebaseConfig) []byte {
-	credentialsTemplate := `{
-		"type": "service_account",
-		"project_id": "%s",
-		"private_key_id": "%s",
-		"private_key": "%s",
-		"client_email": "%s",
-		"client_id": "%s",
-		"auth_uri": "%s",
-		"token_uri": "%s",
-		"auth_provider_x509_cert_url": "%s",
-		"client_x509_cert_url": "%s"
-	}`
+	// Create service account struct
+	serviceAccount := map[string]interface{}{
+		"type":                        "service_account",
+		"project_id":                  config.ProjectID,
+		"private_key_id":              config.PrivateKeyID,
+		"private_key":                 config.PrivateKey,
+		"client_email":                config.ClientEmail,
+		"client_id":                   config.ClientID,
+		"auth_uri":                    config.AuthURI,
+		"token_uri":                   config.TokenURI,
+		"auth_provider_x509_cert_url": config.AuthProviderX509,
+		"client_x509_cert_url":        config.ClientX509,
+	}
 
-	// Format the credentials JSON
-	credentialsJSON := fmt.Sprintf(credentialsTemplate,
-		config.ProjectID,
-		config.PrivateKeyID,
-		config.PrivateKey,
-		config.ClientEmail,
-		config.ClientID,
-		config.AuthURI,
-		config.TokenURI,
-		config.AuthProviderX509,
-		config.ClientX509,
-	)
+	// Marshal to JSON
+	credentialsJSON, err := json.Marshal(serviceAccount)
+	if err != nil {
+		log.Printf("Error marshalling credentials: %v", err)
+		return []byte("{}")
+	}
 
-	return []byte(credentialsJSON)
+	return credentialsJSON
 }
