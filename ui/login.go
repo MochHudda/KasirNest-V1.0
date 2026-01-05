@@ -47,27 +47,38 @@ func (l *LoginScreen) setupUI() {
 	// Create dark background
 	darkBg := canvas.NewRectangle(color.NRGBA{R: 28, G: 42, B: 56, A: 255}) // Dark navy
 
-	// Create KasirNest logo (stylized K with shopping cart)
-	logoText := canvas.NewText("K", color.NRGBA{R: 56, G: 189, B: 190, A: 255}) // Teal color
-	logoText.TextSize = 80
-	logoText.TextStyle = fyne.TextStyle{Bold: true}
-	logoText.Alignment = fyne.TextAlignCenter
+	// Create KasirNest logo from assets
+	var logoContainer *fyne.Container
+	logoResource, err := fyne.LoadResourceFromPath("assets/logo.png")
+	if err == nil {
+		// Use the actual logo from assets
+		logoImage := canvas.NewImageFromResource(logoResource)
+		logoImage.Resize(fyne.NewSize(120, 120))
+		logoImage.FillMode = canvas.ImageFillContain
+		logoContainer = container.NewCenter(logoImage)
+	} else {
+		// Fallback to stylized K with shopping cart if logo not found
+		logoText := canvas.NewText("K", color.NRGBA{R: 56, G: 189, B: 190, A: 255}) // Teal color
+		logoText.TextSize = 80
+		logoText.TextStyle = fyne.TextStyle{Bold: true}
+		logoText.Alignment = fyne.TextAlignCenter
 
-	// Cart wheels (orange circles)
-	wheel1 := canvas.NewCircle(color.NRGBA{R: 255, G: 138, B: 48, A: 255}) // Orange
-	wheel1.Resize(fyne.NewSize(12, 12))
-	wheel2 := canvas.NewCircle(color.NRGBA{R: 255, G: 138, B: 48, A: 255}) // Orange
-	wheel2.Resize(fyne.NewSize(12, 12))
+		// Cart wheels (orange circles)
+		wheel1 := canvas.NewCircle(color.NRGBA{R: 255, G: 138, B: 48, A: 255}) // Orange
+		wheel1.Resize(fyne.NewSize(12, 12))
+		wheel2 := canvas.NewCircle(color.NRGBA{R: 255, G: 138, B: 48, A: 255}) // Orange
+		wheel2.Resize(fyne.NewSize(12, 12))
 
-	// Position wheels relative to the K
-	logoContainer := container.NewWithoutLayout(
-		logoText,
-		wheel1,
-		wheel2,
-	)
-	logoContainer.Resize(fyne.NewSize(120, 100))
-	wheel1.Move(fyne.NewPos(70, 85))
-	wheel2.Move(fyne.NewPos(95, 85))
+		// Position wheels relative to the K
+		logoContainer = container.NewWithoutLayout(
+			logoText,
+			wheel1,
+			wheel2,
+		)
+		logoContainer.Resize(fyne.NewSize(120, 100))
+		wheel1.Move(fyne.NewPos(70, 85))
+		wheel2.Move(fyne.NewPos(95, 85))
+	}
 
 	// KasirNest title
 	kasirText := canvas.NewText("KasirNest", color.NRGBA{R: 56, G: 189, B: 190, A: 255}) // Teal
